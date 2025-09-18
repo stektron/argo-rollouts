@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: sleep-job
+spec:
+  args:
+  - name: duration
+    value: 10s
+  - name: exit-code
+    value: "0"
+  metrics:
+  - name: sleep-job
+    count: 1
+    provider:
+      job:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: sleep
+                image: alpine:3.8
+                command: [sh, -c]
+                args: ["sleep {{args.duration}}; exit {{args.exit-code}}"]
+                resources:
+                  requests:
+                    memory: 16Mi
+                    cpu: 5m
+              restartPolicy: Never
+          backoffLimit: 0
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollout-long-analysis
+spec:
+  replicas: 2
+  strategy:
+    canary:
+      steps:
+      - setWeight: 50
+      - analysis:
+          templates:
+          - templateName: sleep-job # Assumes the sleep-job AnalysisTemplate is in the cluster
+          args:
+          - name: duration
+            value: "60s" # This will keep the rollout Progressing for 60s
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: rollout-long-analysis
+  template:
+    metadata:
+      labels:
+        app: rollout-long-analysis
+    spec:
+      containers:
+      - name: rollouts-demo
+        image: argoproj/rollouts-demo:blue
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: 16Mi
+            cpu: 5m

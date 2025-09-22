@@ -137,12 +137,15 @@ k8s-proto: go-mod-vendor install-protoc-local install-go-tools-local $(TYPES) ##
 # generates *.pb.go, *.pb.gw.go, swagger from .proto files
 .PHONY: api-proto
 api-proto: go-mod-vendor k8s-proto ## generate api protobuf files
-	mkdir -p ${PKG}
-	cp -f $(CURDIR)/pkg/apis/rollouts/v1alpha1/generated.proto ${PKG}
-	$(call protoc,pkg/apiclient/rollout/rollout.proto)
-	cp -Rf $(CURDIR)/github.com/argoproj/argo-rollouts/pkg . | true
-	# cleaning up
-	rm -Rf $(CURDIR)/github.com/
+	TEMP_DIR=$$(mktemp -d); \
+	PATH=${DIST_DIR}:$$PATH protoc \
+	  -I /usr/local/include -I ${DIST_DIR}/protoc-include -I . -I ./vendor -I ${GOPATH}/src -I ${GOPATH}/pkg/mod/github.com/gogo/protobuf@v1.3.2/gogoproto -I ${GOPATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.16.0/third_party/googleapis \
+	  --gogofast_out=plugins=grpc:$$TEMP_DIR \
+	  --grpc-gateway_out=logtostderr=true:$$TEMP_DIR \
+	  --swagger_out=logtostderr=true,fqn_for_swagger_name=true:. \
+	  pkg/apiclient/rollout/rollout.proto; \
+	cp $$TEMP_DIR/github.com/argoproj/argo-rollouts/pkg/apiclient/rollout/*.pb.go pkg/apiclient/rollout/; \
+	rm -rf $$TEMP_DIR;
 
 # generates ui related proto files
 .PHONY: ui-proto
@@ -289,10 +292,10 @@ manifests: ## generate manifests e.g. CRD, RBAC etc.
 
 .PHONY: clean
 clean: ## clean up build artifacts
-	-rm -rf ${CURRENT_DIR}/dist
-	-rm -rf ${CURRENT_DIR}/ui/dist
-	-rm -Rf ${CURRENT_DIR}/github.com/
-	-rm -Rf ${CURRENT_DIR}/k8s.io/
+	-rm -rf $(CURRENT_DIR)/dist
+	-rm -rf $(CURRENT_DIR)/ui/dist
+	-find . -type d -name "github.com" -not -path "./vendor/*" -exec rm -rf {} +
+	-find . -type d -name "k8s.io" -not -path "./vendor/*" -exec rm -rf {} +
 
 .PHONY: precheckin
 precheckin: test lint

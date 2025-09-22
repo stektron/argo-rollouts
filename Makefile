@@ -145,6 +145,7 @@ api-proto: go-mod-vendor k8s-proto ## generate api protobuf files
 	  --swagger_out=logtostderr=true,fqn_for_swagger_name=true:. \
 	  pkg/apiclient/rollout/rollout.proto; \
 	cp $$TEMP_DIR/github.com/argoproj/argo-rollouts/pkg/apiclient/rollout/*.pb.go pkg/apiclient/rollout/; \
+	cp $$TEMP_DIR/github.com/argoproj/argo-rollouts/pkg/apiclient/rollout/*.pb.gw.go pkg/apiclient/rollout/; \
 	rm -rf $$TEMP_DIR;
 
 # generates ui related proto files
@@ -292,8 +293,8 @@ manifests: ## generate manifests e.g. CRD, RBAC etc.
 
 .PHONY: clean
 clean: ## clean up build artifacts
-	-rm -rf $(CURRENT_DIR)/dist
-	-rm -rf $(CURRENT_DIR)/ui/dist
+	-rm -rf ${CURRENT_DIR}/dist
+	-rm -rf ${CURRENT_DIR}/ui/dist
 	-find . -type d -name "github.com" -not -path "./vendor/*" -exec rm -rf {} +
 	-find . -type d -name "k8s.io" -not -path "./vendor/*" -exec rm -rf {} +
 

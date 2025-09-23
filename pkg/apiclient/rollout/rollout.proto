@@ -52,6 +52,14 @@ message RetryRolloutRequest {
     string namespace = 2;
 }
 
+message PauseRolloutRequest {
+    // name and namespace identify the rollout to pause/resume
+    string name = 1;
+    string namespace = 2;
+    // paused indicates whether to pause (true) or resume (false)
+    bool paused = 3;
+}
+
 message RolloutWatchEvent {
     string type = 1;
     RolloutInfo rolloutInfo = 2;
@@ -249,6 +257,13 @@ service RolloutService {
     rpc RetryRollout(RetryRolloutRequest) returns (github.com.argoproj.argo_rollouts.pkg.apis.rollouts.v1alpha1.Rollout) {
         option (google.api.http) = {
             put: "/api/v1/rollouts/{namespace}/{name}/retry"
+            body: "*"
+        };
+    }
+
+    rpc PauseRollout(PauseRolloutRequest) returns (github.com.argoproj.argo_rollouts.pkg.apis.rollouts.v1alpha1.Rollout) {
+        option (google.api.http) = {
+            put: "/api/v1/rollouts/{namespace}/{name}/pause"
             body: "*"
         };
     }

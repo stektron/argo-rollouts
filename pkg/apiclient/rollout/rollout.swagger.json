@@ -146,50 +146,6 @@
         ]
       }
     },
-    "/api/v1/rollouts/{namespace}/{name}/pause": {
-      "put": {
-        "operationId": "RolloutService_PauseRollout",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/github.com.argoproj.argo_rollouts.pkg.apis.rollouts.v1alpha1.Rollout"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/grpc.gateway.runtime.Error"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/rollout.PauseRolloutRequest"
-            }
-          }
-        ],
-        "tags": [
-          "RolloutService"
-        ]
-      }
-    },
     "/api/v1/rollouts/{namespace}/{name}/info": {
       "get": {
         "operationId": "RolloutService_GetRolloutInfo",
@@ -264,6 +220,51 @@
             "in": "path",
             "required": true,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "RolloutService"
+        ]
+      }
+    },
+    "/api/v1/rollouts/{namespace}/{name}/pause": {
+      "put": {
+        "operationId": "RolloutService_PauseRollout",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/github.com.argoproj.argo_rollouts.pkg.apis.rollouts.v1alpha1.Rollout"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/grpc.gateway.runtime.Error"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "description": "name and namespace identify the rollout to pause/resume",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/rollout.PauseRolloutRequest"
+            }
           }
         ],
         "tags": [
@@ -6301,6 +6302,22 @@
         }
       }
     },
+    "rollout.PauseRolloutRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name and namespace identify the rollout to pause/resume"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "paused": {
+          "type": "boolean",
+          "title": "paused indicates whether to pause (true) or resume (false)"
+        }
+      }
+    },
     "rollout.PodInfo": {
       "type": "object",
       "properties": {
@@ -6536,14 +6553,6 @@
         },
         "rolloutInfo": {
           "$ref": "#/definitions/rollout.RolloutInfo"
-        }
-      }
-    },
-    "rollout.PauseRolloutRequest": {
-      "type": "object",
-      "properties": {
-        "paused": {
-          "type": "boolean"
         }
       }
     },

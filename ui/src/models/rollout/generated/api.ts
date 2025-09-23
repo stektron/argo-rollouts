@@ -7667,6 +7667,18 @@ export interface RolloutNonJobInfo {
 export interface RolloutPauseRolloutRequest {
     /**
      * 
+     * @type {string}
+     * @memberof RolloutPauseRolloutRequest
+     */
+    name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RolloutPauseRolloutRequest
+     */
+    namespace?: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof RolloutPauseRolloutRequest
      */
@@ -8296,7 +8308,7 @@ export const RolloutServiceApiFetchParamCreator = function (configuration?: Conf
          * 
          * @param {RolloutPauseRolloutRequest} body 
          * @param {string} namespace 
-         * @param {string} name 
+         * @param {string} name name and namespace identify the rollout to pause/resume
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8745,7 +8757,7 @@ export const RolloutServiceApiFp = function(configuration?: Configuration) {
          * 
          * @param {RolloutPauseRolloutRequest} body 
          * @param {string} namespace 
-         * @param {string} name 
+         * @param {string} name name and namespace identify the rollout to pause/resume
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -8970,7 +8982,7 @@ export const RolloutServiceApiFactory = function (configuration?: Configuration,
          * 
          * @param {RolloutPauseRolloutRequest} body 
          * @param {string} namespace 
-         * @param {string} name 
+         * @param {string} name name and namespace identify the rollout to pause/resume
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -9123,7 +9135,7 @@ export class RolloutServiceApi extends BaseAPI {
      * 
      * @param {RolloutPauseRolloutRequest} body 
      * @param {string} namespace 
-     * @param {string} name 
+     * @param {string} name name and namespace identify the rollout to pause/resume
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof RolloutServiceApi

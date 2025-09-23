@@ -59,10 +59,8 @@ message RetryRolloutRequest {
 }
 
 message PauseRolloutRequest {
-    // name and namespace identify the rollout to pause/resume
     string name = 1;
     string namespace = 2;
-    // paused indicates whether to pause (true) or resume (false)
     bool paused = 3;
 }
 

@@ -36,11 +36,8 @@ export const RolloutActionButton = (props: {action: RolloutAction; rollout: Roll
     const isProgressing = props.rollout.status === RolloutStatus.Progressing;
     const isDeploying = isProgressing || isPaused;
 
-    // A programmatic pause is an intentional pause in the strategy (e.g. a `pause:` step or an analysis). We detect this by looking for keywords in the message field.
     const isProgrammaticallyPaused = isPaused && (props.rollout.message?.includes('Pause') || props.rollout.message?.includes('Inconclusive'));
-    // A manual pause is when the user has explicitly set .spec.paused = true. The controller reflects this with the specific message "manually paused".
     const isManuallyPaused = isPaused && props.rollout.message === 'manually paused';
-    // The Pause button should be enabled only when the rollout is progressing.
     const canBePaused = isProgressing;
 
     const restartedAt = formatTimestamp(props.rollout.restartedAt || '');
@@ -181,7 +178,6 @@ export const RolloutActionButton = (props: {action: RolloutAction; rollout: Roll
 
 export const RolloutActions = (props: {rollout: RolloutInfo}) => {
     const isPaused = props.rollout.status === RolloutStatus.Paused;
-    // A programmatic pause is an intentional pause in the strategy (e.g. a `pause:` step or an analysis). We detect this by looking for keywords in the message field.
     const isProgrammaticallyPaused = isPaused && (props.rollout.message?.includes('Pause') || props.rollout.message?.includes('Inconclusive'));
 
     return (

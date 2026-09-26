@@ -86,57 +86,150 @@ func TestUndoRolloutReturnsRollout(t *testing.T) {
 }
 
 func TestPauseRollout(t *testing.T) {
-	objects := testdata.NewCanaryRollout()
-	expected := objects.Rollouts[0]
-	expected.Spec.Paused = false
+	testCases := []struct {
+		name       string
+		paused     bool
+		namespace  string
+		nameTarget string
+		wantErr    bool
+	}{
+		{
+			name:    "pauses rollout",
+			paused:  true,
+			wantErr: false,
+		},
+		{
+			name:       "rollout not found",
+			paused:     true,
+			nameTarget: "does-not-exist",
+			wantErr:    true,
+		},
+		{
+			name:      "rollout in nonexistent namespace",
+			paused:    true,
+			namespace: "no-such-namespace",
+			wantErr:   true,
+		},
+	}
 
-	s := newTestServer(t, objects.AllObjects()...)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			objects := testdata.NewCanaryRollout()
+			expected := objects.Rollouts[0]
+			expected.Spec.Paused = false
+
+			namespace := expected.Namespace
+			if tc.namespace != "" {
+				namespace = tc.namespace
+			}
+			name := expected.Name
+			if tc.nameTarget != "" {
+				name = tc.nameTarget
+			}
+
+			s := newTestServer(t, objects.AllObjects()...)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+
+			rollout, err := s.PauseRollout(ctx, &rolloutapi.PauseRolloutRequest{
+				Namespace: namespace,
+				Name:      name,
+				Paused:    tc.paused,
+			})
+
+			if tc.wantErr {
+				require.Error(t, err)
+				assert.Nil(t, rollout)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, rollout)
+
+			updated, err := s.Options.DynamicClientset.
+				Resource(v1alpha1.RolloutGVR).
+				Namespace(expected.Namespace).
+				Get(ctx, expected.Name, metav1.GetOptions{})
+
+			require.NoError(t, err)
+			assert.Equal(t, true, updated.Object["spec"].(map[string]interface{})["paused"])
+		})
+	}
+}
+
+func TestPauseRollout_NotFound(t *testing.T) {
+	s := newTestServer(t) // Creates an empty fake server with no rollout objects
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err := s.PauseRollout(ctx, &rolloutapi.PauseRolloutRequest{
-		Namespace: expected.Namespace,
-		Name:      expected.Name,
+	ro, err := s.PauseRollout(ctx, &rolloutapi.PauseRolloutRequest{
+		Namespace: "default",
+		Name:      "does-not-exist",
 		Paused:    true,
 	})
 
-	require.NoError(t, err)
-
-	updated, err := s.Options.DynamicClientset.
-		Resource(v1alpha1.RolloutGVR).
-		Namespace(expected.Namespace).
-		Get(ctx, expected.Name, metav1.GetOptions{})
-
-	require.NoError(t, err)
-	assert.Equal(t, true, updated.Object["spec"].(map[string]interface{})["paused"])
+	require.Error(t, err)
+	assert.Nil(t, ro)
 }
 
-func TestPauseRolloutUnpauses(t *testing.T) {
-	objects := testdata.NewCanaryRollout()
-	expected := objects.Rollouts[0]
-	expected.Spec.Paused = true
+func TestResumeRollout(t *testing.T) {
+	testCases := []struct {
+		name       string
+		nameTarget string
+		wantErr    bool
+	}{
+		{
+			name:    "resumes paused rollout",
+			wantErr: false,
+		},
+		{
+			name:       "resume nonexistent rollout fails",
+			nameTarget: "does-not-exist",
+			wantErr:    true,
+		},
+	}
 
-	s := newTestServer(t, objects.AllObjects()...)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			objects := testdata.NewCanaryRollout()
+			expected := objects.Rollouts[0]
+			expected.Spec.Paused = true
 
-	_, err := s.PauseRollout(ctx, &rolloutapi.PauseRolloutRequest{
-		Namespace: expected.Namespace,
-		Name:      expected.Name,
-		Paused:    false,
-	})
+			name := expected.Name
+			if tc.nameTarget != "" {
+				name = tc.nameTarget
+			}
 
-	require.NoError(t, err)
+			s := newTestServer(t, objects.AllObjects()...)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
 
-	updated, err := s.Options.DynamicClientset.
-		Resource(v1alpha1.RolloutGVR).
-		Namespace(expected.Namespace).
-		Get(ctx, expected.Name, metav1.GetOptions{})
+			rollout, err := s.PauseRollout(ctx, &rolloutapi.PauseRolloutRequest{
+				Namespace: expected.Namespace,
+				Name:      name,
+				Paused:    false,
+			})
 
-	require.NoError(t, err)
+			if tc.wantErr {
+				require.Error(t, err)
+				assert.Nil(t, rollout)
+				return
+			}
 
-	spec := updated.Object["spec"].(map[string]interface{})
-	assert.False(t, spec["paused"] == true)
+			require.NoError(t, err)
+			require.NotNil(t, rollout)
+
+			updated, err := s.Options.DynamicClientset.
+				Resource(v1alpha1.RolloutGVR).
+				Namespace(expected.Namespace).
+				Get(ctx, expected.Name, metav1.GetOptions{})
+
+			require.NoError(t, err)
+
+			spec := updated.Object["spec"].(map[string]interface{})
+			assert.False(t, spec["paused"] == true)
+		})
+	}
 }
 
 func TestNewHTTPServer(t *testing.T) {
